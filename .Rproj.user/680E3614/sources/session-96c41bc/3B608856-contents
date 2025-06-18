@@ -1,0 +1,65 @@
+---
+title: "moccasin"
+format: html
+author: "ABC"
+date: "01/06/2025"
+---
+
+```{r}
+#| label: necessary libraries
+library(ggplot2)
+library(tidyverse)
+library(maps)
+```
+
+```{r}
+#| label: data preprocessing
+
+# Load the dataset
+data <- read.csv("measles_cases.csv")
+
+# Check for any duplicate rows
+data <- distinct(data)
+
+# Print the first few rows of the dataset
+head(data)
+
+# Drop the last column
+data <- data[, 1:2]  # Keeps only "State" and "Confirmed Cases"
+
+# Check for missing values
+sum(is.na(data))  # Total number of NA values
+
+head(data)
+```
+
+```{r, fig.width=8, fig.height=4}
+#| label: data visualization
+
+# Prepare state names for joining
+# Convert to lowercase to match map_data
+data$State <- tolower(data$State)
+# Get USA map data
+states_map <- map_data("state")
+
+# Merge map data with measles data
+choropleth_data <- left_join(states_map, data, by = c("region" = "State"))
+
+# Calculate state label positions (centroids)
+state_centers <- aggregate(cbind(long, lat) ~ region, data = choropleth_data, FUN = function(x) mean(range(x)))
+
+# Plot
+ggplot(choropleth_data, aes(x = long, y = lat, group = group, fill = Confirmed.Cases)) +
+  geom_polygon(color = "white") +
+  geom_path(color = "black", linewidth = 0.3) +
+  geom_text(data = state_centers,
+            aes(x = long, y = lat, label = toupper(region)),
+            color = "black", size = 2.5, inherit.aes = FALSE) +
+  scale_fill_gradient(low = "lightyellow", high = "red", na.value = "grey90") +
+  labs(title = "2025 Measles Confirmed Cases by State",
+       fill = "Cases") +
+  theme_minimal() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        panel.grid = element_blank())
+```
