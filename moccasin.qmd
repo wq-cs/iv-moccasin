@@ -33,33 +33,53 @@ sum(is.na(data))  # Total number of NA values
 head(data)
 ```
 
-```{r, fig.width=8, fig.height=4}
-#| label: data visualization
+```{r data-visualization, fig.width=8, fig.height=4}
 
-# Prepare state names for joining
-# Convert to lowercase to match map_data
+# Convert state names for merging
 data$State <- tolower(data$State)
-# Get USA map data
-states_map <- map_data("state")
 
-# Merge map data with measles data
+# Define case bins and numeric labels
+breaks <- c(-1, 10, 50, 100, 500, Inf)
+labels <- c("1–10", "11–50", "51–100", "101–500", ">500")
+data$Severity <- cut(data$Confirmed.Cases, breaks = breaks, labels = labels)
+
+# Load map and merge with data
+states_map <- map_data("state")
 choropleth_data <- left_join(states_map, data, by = c("region" = "State"))
 
-# Calculate state label positions (centroids)
-state_centers <- aggregate(cbind(long, lat) ~ region, data = choropleth_data, FUN = function(x) mean(range(x)))
+# Prepare label positions and full abbreviations
+label_data <- aggregate(cbind(long, lat) ~ region, data = choropleth_data, FUN = function(x) mean(range(x)))
+label_data$Severity <- data$Severity[match(label_data$region, data$State)]
+label_data$abbr <- state.abb[match(toupper(label_data$region), toupper(state.name))]
+
+# Filter only states with 51+ cases (moderate or above)
+label_data <- subset(label_data, Severity %in% c("51–100", ">500"))
+
+# Use black text for all
+label_data$label_color <- "black"
+
+# Define color palette
+fill_colors <- c("1–10" = "#fef0d9",
+                 "11–50" = "#fdcc8a",
+                 "51–100" = "#fc8d59",
+                 "101–500" = "#e34a33",
+                 ">500" = "#b30000")
 
 # Plot
-ggplot(choropleth_data, aes(x = long, y = lat, group = group, fill = Confirmed.Cases)) +
+ggplot(choropleth_data, aes(x = long, y = lat, group = group, fill = Severity)) +
   geom_polygon(color = "white") +
   geom_path(color = "black", linewidth = 0.3) +
-  geom_text(data = state_centers,
-            aes(x = long, y = lat, label = toupper(region)),
-            color = "black", size = 2.5, inherit.aes = FALSE) +
-  scale_fill_gradient(low = "lightyellow", high = "red", na.value = "grey90") +
-  labs(title = "2025 Measles Confirmed Cases by State",
-       fill = "Cases") +
+  geom_text(data = label_data,
+            aes(x = long, y = lat, label = abbr),
+            color = "black", fontface = "bold", size = 3, inherit.aes = FALSE) +
+  scale_fill_manual(values = fill_colors, na.value = "grey90") +
+  labs(title = "2025 Measles Severity by State",
+       fill = "Confirmed Cases",
+       caption = "Note: Only states with 51+ confirmed cases are labeled for clarity.") +
   theme_minimal() +
-  theme(axis.text = element_blank(),
+  theme(legend.background = element_rect(color = "black", fill = NA, size = 0.5),
+        axis.text = element_blank(),
         axis.title = element_blank(),
-        panel.grid = element_blank())
+        panel.grid = element_blank(),
+        plot.caption = element_text(hjust = 0.5, size = 8, face = "italic"))
 ```
