@@ -1,7 +1,7 @@
 ---
-title: "moccasin"
+title: "Moccasin Measles Improved Visualisation"
 format: html
-author: "ABC"
+author: "Kenny Low Wei Lun, Seah Yi Long Clarence, Lee Wen Qiang, Karianne Lai Wei Xuan, Goh Jia Rui Gary, Lim Jun Jie, Toh Li En"
 date: "01/06/2025"
 ---
 
@@ -9,77 +9,67 @@ date: "01/06/2025"
 #| label: necessary libraries
 library(ggplot2)
 library(tidyverse)
-library(maps)
+library(usmap)
+library(readxl)
+library(dplyr)
+library(stringr)
 ```
 
 ```{r}
 #| label: data preprocessing
+# Load measles data
+measles_df <- read.csv("measles_cases.csv")
+measles_df <- measles_df[, c("State", "Confirmed.Cases")]
+measles_df$State <- str_trim(measles_df$State)
 
-# Load the dataset
-data <- read.csv("measles_cases.csv")
+# Load population Excel data (skip first 4 rows)
+pop_raw <- read_excel("SCPRC-EST2024-18+POP.xlsx", skip = 4, col_names = FALSE)
 
-# Check for any duplicate rows
-data <- distinct(data)
+# Extract and clean State and Population columns
+population_df <- data.frame(State = pop_raw[[1]], Population = pop_raw[[2]])
+population_df$State <- str_remove(population_df$State, "^\\.+")
+population_df$State <- str_trim(population_df$State)
+population_df$Population <- as.numeric(population_df$Population)
 
-# Print the first few rows of the dataset
-head(data)
+# Filter out non-state entries and NA values
+exclude_states <- c("United States", "Northeast", "Midwest", "South", "West", "Puerto Rico")
+population_df <- population_df[!(population_df$State %in% exclude_states), ]
+population_df <- population_df[!is.na(population_df$Population), ]
 
-# Drop the last column
-data <- data[, 1:2]  # Keeps only "State" and "Confirmed Cases"
+# Merge data on State
+merged_df <- merge(population_df, measles_df, by = "State", all.x = TRUE)
 
-# Check for missing values
-sum(is.na(data))  # Total number of NA values
+# Change NA to 0 for confirmed cases
+merged_df$Confirmed.Cases[is.na(merged_df$Confirmed.Cases)] <- 0
 
-head(data)
+# Calculate severity rate per 100,000 population
+merged_df$Severity <- (merged_df$Confirmed.Cases / merged_df$Population) * 100000
+
+# Optional: round to 2 decimal places
+merged_df$Severity <- round(merged_df$Severity, 2)
+
+# View result
+print(merged_df)
 ```
+```{r}
+# Ensure state names match map data — convert to lowercase for safety
+merged_df$State <- tolower(merged_df$State)
 
-```{r data-visualization, fig.width=8, fig.height=4}
+# usmap uses full state names or abbreviations — ensure compatibility
+# Convert full state names to abbreviations
+merged_df$fips <- fips(merged_df$State)
 
-# Convert state names for merging
-data$State <- tolower(data$State)
+# Merge with usmap data by state name
+plot_data <- merged_df[, c("State", "Severity")]
+names(plot_data)[names(plot_data) == "State"] <- "state"  # lowercase required by usmap
 
-# Define case bins and numeric labels
-breaks <- c(-1, 10, 50, 100, 500, Inf)
-labels <- c("1–10", "11–50", "51–100", "101–500", ">500")
-data$Severity <- cut(data$Confirmed.Cases, breaks = breaks, labels = labels)
-
-# Load map and merge with data
-states_map <- map_data("state")
-choropleth_data <- left_join(states_map, data, by = c("region" = "State"))
-
-# Prepare label positions and full abbreviations
-label_data <- aggregate(cbind(long, lat) ~ region, data = choropleth_data, FUN = function(x) mean(range(x)))
-label_data$Severity <- data$Severity[match(label_data$region, data$State)]
-label_data$abbr <- state.abb[match(toupper(label_data$region), toupper(state.name))]
-
-# Filter only states with 51+ cases (moderate or above)
-label_data <- subset(label_data, Severity %in% c("51–100", ">500"))
-
-# Use black text for all
-label_data$label_color <- "black"
-
-# Define color palette
-fill_colors <- c("1–10" = "#fef0d9",
-                 "11–50" = "#fdcc8a",
-                 "51–100" = "#fc8d59",
-                 "101–500" = "#e34a33",
-                 ">500" = "#b30000")
-
-# Plot
-ggplot(choropleth_data, aes(x = long, y = lat, group = group, fill = Severity)) +
-  geom_polygon(color = "white") +
-  geom_path(color = "black", linewidth = 0.3) +
-  geom_text(data = label_data,
-            aes(x = long, y = lat, label = abbr),
-            color = "black", fontface = "bold", size = 3, inherit.aes = FALSE) +
-  scale_fill_manual(values = fill_colors, na.value = "grey90") +
-  labs(title = "2025 Measles Severity by State",
-       fill = "Confirmed Cases",
-       caption = "Note: Only states with 51+ confirmed cases are labeled for clarity.") +
-  theme_minimal() +
-  theme(legend.background = element_rect(color = "black", fill = NA, size = 0.5),
-        axis.text = element_blank(),
-        axis.title = element_blank(),
-        panel.grid = element_blank(),
-        plot.caption = element_text(hjust = 0.5, size = 8, face = "italic"))
+# Plot severity map
+plot_usmap(data = plot_data, values = "Severity", regions = "states", labels = TRUE) +
+  scale_fill_continuous(
+    low = "white", high = "red", 
+    name = "Measles Cases per 100K",
+    label = scales::comma
+  ) +
+  theme(legend.position = "right") +
+  labs(title = "Measles Severity by State")
 ```
