@@ -10,6 +10,12 @@ This repository contains materials and analysis based on the following publicly 
 
 -   Centers for Disease Control and Prevention. (2025, June 24). Measles: Data and statistics. U.S. Department of Health & Human Services. <https://www.cdc.gov/measles/data-research/index.html>
 
+-   Wickham, H., Averick, M., Bryan, J., Chang, W., D’Agostino McGowan, L., François, R., … Yutani, H. (2019). *Welcome to the tidyverse*. *Journal of Open Source Software, 4*(43), 1686. <https://doi.org/10.21105/joss.01686>
+
+<!-- -->
+
+-    Brewer, C. A. (2014, January 4). *ColorBrewer: Color advice for maps*. *Pennsylvania State University*. <https://colorbrewer2.org>
+
 ------------------------------------------------------------------------
 
 These references support outbreak mapping, incidence calculations, and population-based normalization for 2025 measles analysis.
