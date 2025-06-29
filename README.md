@@ -16,6 +16,8 @@ This repository contains materials and analysis based on the following publicly 
 
 -    Brewer, C. A. (2014, January 4). *ColorBrewer: Color advice for maps*. *Pennsylvania State University*. <https://colorbrewer2.org>
 
+-   Schwalbe, E. (2021). *usmap: US Maps Including Alaska and Hawaii*. *R package version 0.6.0*. <https://cran.r-project.org/package=usmap>
+
 ------------------------------------------------------------------------
 
 These references support outbreak mapping, incidence calculations, and population-based normalization for 2025 measles analysis.
