@@ -13,15 +13,14 @@ library(usmap)
 library(readxl)
 library(dplyr)
 library(stringr)
+library(janitor)
+library(sf)
 ```
 
 ```{r}
 #| label: data-preprocessing
 #| message: false
 #| warning: false
-library(tidyverse) # dplyr, readr, stringr, …
-library(readxl)
-library(janitor)
 
 ## 1 ── Measles cases -------------------------------------------------------
 measles_df <-
@@ -72,11 +71,6 @@ merged_df <-
 #| label: data-visualisation
 #| message: false
 #| warning: false
-library(usmap)
-library(ggplot2)
-library(dplyr)
-library(sf) # for st_coordinates()
-library(scales)
 
 ## 1 ── US polygons (sf) ----------------------------------------------------
 map_sf <- us_map(regions = "states") # sf with geometry column
