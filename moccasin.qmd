@@ -19,7 +19,7 @@ library(stringr)
 #| label: data-preprocessing
 #| message: false
 #| warning: false
-library(tidyverse)   # includes dplyr, readr, stringr, …
+library(tidyverse)   # dplyr, readr, stringr, …
 library(readxl)
 library(janitor)
 
@@ -52,20 +52,22 @@ merged_df <-
   mutate(
     confirmed_cases = replace_na(confirmed_cases, 0),
     severity        = round((confirmed_cases / population) * 1e5, 2),
+
+    # ---- bucket: 0, <2, 2-<3, 3-<4, 4-<5, ≥5 ----------------------------
     severity_bucket = case_when(
-      severity == 0 ~ NA_character_,
-      severity <= 1 ~ "1",
-      severity <= 2 ~ "2",
-      severity <= 3 ~ "3",
-      severity <= 4 ~ "4",
-      TRUE          ~ "5"
+      severity == 0        ~ "0",
+      severity <  2        ~ "1",
+      severity <  3        ~ "2",
+      severity <  4        ~ "3",
+      severity <  5        ~ "4",
+      TRUE                 ~ "5"
     )
   )
 ```
 
 ```{r}
 #| label: data-visualisation
-#| message: true
+#| message: false
 #| warning: false
 library(usmap)
 library(ggplot2)
@@ -73,27 +75,19 @@ library(dplyr)
 library(sf)       # for st_coordinates()
 library(scales)
 
-cat("\n── Step 0: merged_df ──\n")
-print(glimpse(merged_df))
-
 ## 1 ── US polygons (sf) ----------------------------------------------------
-map_sf <- us_map(regions = "states")               # sf with a geometry column
-cat("\n── Step 1: map_sf ──\n")
-print(glimpse(map_sf))
+map_sf <- us_map(regions = "states")               # sf with geometry column
 
-## 2 ── Join polygons with severity (key in lower-case) ---------------------
+## 2 ── Join polygons with severity ----------------------------------------
 map_merged <-
   map_sf |>
   mutate(state_lower = tolower(full)) |>
   left_join(
     merged_df |>
       mutate(state_lower = tolower(state)) |>
-      select(state_lower, severity_bucket, severity),   # keep extra severity
+      select(state_lower, severity_bucket, severity),
     by = "state_lower"
   )
-
-cat("\n── Step 2: map_merged ──\n")
-print(glimpse(map_merged))
 
 ## 3 ── Centroids for labels (≥ 2 per 100 K) -------------------------------
 centers_sf <-
@@ -103,10 +97,7 @@ centers_sf <-
     state = tolower(state.name),
     abbr  = state.abb
   ) |>
-  usmap_transform()                                 # returns POINT geometry
-
-cat("\n── Step 3: centers_sf ──\n")
-print(glimpse(centers_sf))
+  usmap_transform()                                 # POINT geometry
 
 label_df <-
   centers_sf |>
@@ -123,27 +114,32 @@ label_df <-
     y = coords[, 2]
   )
 
-cat("\n── Step 4: label_df ──\n")
-print(glimpse(label_df))
-
-## 4 ── Five-colour palette -------------------------------------------------
-pal <- c("1" = "#fef0d9",
+## 4 ── Colour palette incl. “0” bucket ------------------------------------
+pal <- c("0" = "#ffffff",   # white for 0-case states (now shows in legend)
+         "1" = "#fef0d9",
          "2" = "#fdcc8a",
          "3" = "#fc8d59",
-         "4" = "#e34a33",
+         "4" = "#d7301f",
          "5" = "#b30000")
 
-## 5 ── Plot with black borders & boxed legend --------------------------------
+## 5 ── Plot ---------------------------------------------------------------
 ggplot(map_merged) +
-  geom_sf(aes(fill = severity_bucket),          # polygons
-          colour = "black", size = 0.4) +       # ← black state borders
+  geom_sf(aes(fill = severity_bucket),
+          colour = "black", size = 0.4) +                    # black borders
   scale_fill_manual(
     values   = pal,
-    na.value = "white",
+    na.value = "grey90",
     drop     = FALSE,
-    name     = "Measles cases\n(per 100 K)"
+    name     = "Measles cases\n(per 100 K)",
+    breaks   = c("0","1","2","3","4","5"),
+    labels   = c("0",
+                 "< 2",
+                 "2 - <3",
+                 "3 – <4",
+                 "4 – <5",
+                 "≥ 5")
   ) +
-  geom_text(                                    # state abbreviations
+  geom_text(
     data        = label_df,
     aes(x = x, y = y, label = abbr),
     inherit.aes = FALSE,
@@ -154,9 +150,13 @@ ggplot(map_merged) +
   theme_void() +
   theme(
     legend.position   = "right",
-    legend.background = element_rect(           # ← legend box border
-      colour = "black", fill = "white", linewidth = 0.4
-    )
+    legend.background = element_rect(colour = "black",
+                                     fill   = "white",
+                                     linewidth = 0.4),
+    legend.margin     = margin(5, 5, 5, 5)
   ) +
-  labs(title = "Measles Severity by State (per 100 K) – 21 June 2025")
+  labs(
+    title   = "Measles Severity by State (per 100 K) up to 21 June 2025",
+    caption = "Note: Only states with severity ≥ 2 cases per 100K are labelled for emphasis."
+  )
 ```
