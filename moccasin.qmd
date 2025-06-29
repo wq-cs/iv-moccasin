@@ -16,60 +16,147 @@ library(stringr)
 ```
 
 ```{r}
-#| label: data preprocessing
-# Load measles data
-measles_df <- read.csv("measles_cases.csv")
-measles_df <- measles_df[, c("State", "Confirmed.Cases")]
-measles_df$State <- str_trim(measles_df$State)
+#| label: data-preprocessing
+#| message: false
+#| warning: false
+library(tidyverse)   # includes dplyr, readr, stringr, …
+library(readxl)
+library(janitor)
 
-# Load population Excel data (skip first 4 rows)
-pop_raw <- read_excel("SCPRC-EST2024-18+POP.xlsx", skip = 4, col_names = FALSE)
+## 1 ── Measles cases -------------------------------------------------------
+measles_df <-
+  read_csv("measles_cases.csv", show_col_types = FALSE) |>
+  clean_names() |>
+  select(state, confirmed_cases) |>
+  mutate(state = str_trim(state))
 
-# Extract and clean State and Population columns
-population_df <- data.frame(State = pop_raw[[1]], Population = pop_raw[[2]])
-population_df$State <- str_remove(population_df$State, "^\\.+")
-population_df$State <- str_trim(population_df$State)
-population_df$Population <- as.numeric(population_df$Population)
+## 2 ── Population ----------------------------------------------------------
+pop_raw <-
+  read_excel("SCPRC-EST2024-18+POP.xlsx",
+             skip      = 4,
+             col_names = FALSE)
 
-# Filter out non-state entries and NA values
-exclude_states <- c("United States", "Northeast", "Midwest", "South", "West", "Puerto Rico")
-population_df <- population_df[!(population_df$State %in% exclude_states), ]
-population_df <- population_df[!is.na(population_df$Population), ]
+population_df <-
+  tibble(
+    state      = str_trim(str_remove(pop_raw[[1]], "^\\.+")),
+    population = as.numeric(pop_raw[[2]])
+  ) |>
+  filter(!state %in% c("United States", "Northeast", "Midwest",
+                       "South", "West", "Puerto Rico")) |>
+  drop_na(population)
 
-# Merge data on State
-merged_df <- merge(population_df, measles_df, by = "State", all.x = TRUE)
-
-# Change NA to 0 for confirmed cases
-merged_df$Confirmed.Cases[is.na(merged_df$Confirmed.Cases)] <- 0
-
-# Calculate severity rate per 100,000 population
-merged_df$Severity <- (merged_df$Confirmed.Cases / merged_df$Population) * 100000
-
-# Optional: round to 2 decimal places
-merged_df$Severity <- round(merged_df$Severity, 2)
-
-# View result
-print(merged_df)
+## 3 ── Merge & derive severity --------------------------------------------
+merged_df <-
+  population_df |>
+  left_join(measles_df, by = "state") |>
+  mutate(
+    confirmed_cases = replace_na(confirmed_cases, 0),
+    severity        = round((confirmed_cases / population) * 1e5, 2),
+    severity_bucket = case_when(
+      severity == 0 ~ NA_character_,
+      severity <= 1 ~ "1",
+      severity <= 2 ~ "2",
+      severity <= 3 ~ "3",
+      severity <= 4 ~ "4",
+      TRUE          ~ "5"
+    )
+  )
 ```
+
 ```{r}
-# Ensure state names match map data — convert to lowercase for safety
-merged_df$State <- tolower(merged_df$State)
+#| label: data-visualisation
+#| message: true
+#| warning: false
+library(usmap)
+library(ggplot2)
+library(dplyr)
+library(sf)       # for st_coordinates()
+library(scales)
 
-# usmap uses full state names or abbreviations — ensure compatibility
-# Convert full state names to abbreviations
-merged_df$fips <- fips(merged_df$State)
+cat("\n── Step 0: merged_df ──\n")
+print(glimpse(merged_df))
 
-# Merge with usmap data by state name
-plot_data <- merged_df[, c("State", "Severity")]
-names(plot_data)[names(plot_data) == "State"] <- "state"  # lowercase required by usmap
+## 1 ── US polygons (sf) ----------------------------------------------------
+map_sf <- us_map(regions = "states")               # sf with a geometry column
+cat("\n── Step 1: map_sf ──\n")
+print(glimpse(map_sf))
 
-# Plot severity map
-plot_usmap(data = plot_data, values = "Severity", regions = "states", labels = TRUE) +
-  scale_fill_continuous(
-    low = "white", high = "red", 
-    name = "Measles Cases per 100K",
-    label = scales::comma
+## 2 ── Join polygons with severity (key in lower-case) ---------------------
+map_merged <-
+  map_sf |>
+  mutate(state_lower = tolower(full)) |>
+  left_join(
+    merged_df |>
+      mutate(state_lower = tolower(state)) |>
+      select(state_lower, severity_bucket, severity),   # keep extra severity
+    by = "state_lower"
+  )
+
+cat("\n── Step 2: map_merged ──\n")
+print(glimpse(map_merged))
+
+## 3 ── Centroids for labels (≥ 2 per 100 K) -------------------------------
+centers_sf <-
+  tibble(
+    lon   = state.center$x,
+    lat   = state.center$y,
+    state = tolower(state.name),
+    abbr  = state.abb
+  ) |>
+  usmap_transform()                                 # returns POINT geometry
+
+cat("\n── Step 3: centers_sf ──\n")
+print(glimpse(centers_sf))
+
+label_df <-
+  centers_sf |>
+  inner_join(
+    merged_df |>
+      mutate(state_lower = tolower(state)) |>
+      filter(severity >= 2) |>
+      select(state_lower),
+    by = c("state" = "state_lower")
+  ) |>
+  mutate(
+    coords = st_coordinates(geometry),
+    x = coords[, 1],
+    y = coords[, 2]
+  )
+
+cat("\n── Step 4: label_df ──\n")
+print(glimpse(label_df))
+
+## 4 ── Five-colour palette -------------------------------------------------
+pal <- c("1" = "#fef0d9",
+         "2" = "#fdcc8a",
+         "3" = "#fc8d59",
+         "4" = "#e34a33",
+         "5" = "#b30000")
+
+## 5 ── Plot with black borders & boxed legend --------------------------------
+ggplot(map_merged) +
+  geom_sf(aes(fill = severity_bucket),          # polygons
+          colour = "black", size = 0.4) +       # ← black state borders
+  scale_fill_manual(
+    values   = pal,
+    na.value = "white",
+    drop     = FALSE,
+    name     = "Measles cases\n(per 100 K)"
   ) +
-  theme(legend.position = "right") +
-  labs(title = "Measles Severity by State")
+  geom_text(                                    # state abbreviations
+    data        = label_df,
+    aes(x = x, y = y, label = abbr),
+    inherit.aes = FALSE,
+    fontface    = "bold",
+    size        = 3
+  ) +
+  coord_sf() +
+  theme_void() +
+  theme(
+    legend.position   = "right",
+    legend.background = element_rect(           # ← legend box border
+      colour = "black", fill = "white", linewidth = 0.4
+    )
+  ) +
+  labs(title = "Measles Severity by State (per 100 K) – 21 June 2025")
 ```

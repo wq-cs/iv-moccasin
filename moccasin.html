@@ -68,37 +68,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="moccasin_files/libs/quarto-html/quarto-syntax-highlighting-2f5df379a58b258e96c21c0638c20c03.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="moccasin_files/libs/bootstrap/bootstrap.min.js"></script>
 <link href="moccasin_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="moccasin_files/libs/bootstrap/bootstrap-1bc8a17f135ab3d594c857e9f48e611b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="moccasin_files/libs/bootstrap/bootstrap-c0367b04c37547644fece4185067e4a7.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 
-  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
-
-<script type="text/javascript">
-const typesetMath = (el) => {
-  if (window.MathJax) {
-    // MathJax Typeset
-    window.MathJax.typeset([el]);
-  } else if (window.katex) {
-    // KaTeX Render
-    var mathElements = el.getElementsByClassName("math");
-    var macros = [];
-    for (var i = 0; i < mathElements.length; i++) {
-      var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN") {
-        window.katex.render(texText.data, mathElements[i], {
-          displayMode: mathElements[i].classList.contains('display'),
-          throwOnError: false,
-          macros: macros,
-          fleqn: false
-        });
-      }
-    }
-  }
-}
-window.Quarto = {
-  typesetMath
-};
-</script>
 
 </head>
 
@@ -146,80 +117,314 @@ window.Quarto = {
 <pre><code>── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
 ✔ dplyr     1.1.4     ✔ readr     2.1.5
 ✔ forcats   1.0.0     ✔ stringr   1.5.1
-✔ lubridate 1.9.4     ✔ tibble    3.2.1
+✔ lubridate 1.9.4     ✔ tibble    3.3.0
 ✔ purrr     1.0.4     ✔ tidyr     1.3.1
 ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
 ✖ dplyr::filter() masks stats::filter()
 ✖ dplyr::lag()    masks stats::lag()
 ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(usmap)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(usmap)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load the dataset</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"measles_cases.csv"</span>)</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Check for any duplicate rows</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">distinct</span>(data)</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the first few rows of the dataset</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)   <span class="co"># includes dplyr, readr, stringr, …</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(janitor)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="do">## 1 ── Measles cases -------------------------------------------------------</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>measles_df <span class="ot">&lt;-</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(<span class="st">"measles_cases.csv"</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">clean_names</span>() <span class="sc">|&gt;</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(state, confirmed_cases) <span class="sc">|&gt;</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">state =</span> <span class="fu">str_trim</span>(state))</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="do">## 2 ── Population ----------------------------------------------------------</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>pop_raw <span class="ot">&lt;-</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_excel</span>(<span class="st">"SCPRC-EST2024-18+POP.xlsx"</span>,</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>             <span class="at">skip      =</span> <span class="dv">4</span>,</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>             <span class="at">col_names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>population_df <span class="ot">&lt;-</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">state      =</span> <span class="fu">str_trim</span>(<span class="fu">str_remove</span>(pop_raw[[<span class="dv">1</span>]], <span class="st">"^</span><span class="sc">\\</span><span class="st">.+"</span>)),</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">population =</span> <span class="fu">as.numeric</span>(pop_raw[[<span class="dv">2</span>]])</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>state <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"United States"</span>, <span class="st">"Northeast"</span>, <span class="st">"Midwest"</span>,</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>                       <span class="st">"South"</span>, <span class="st">"West"</span>, <span class="st">"Puerto Rico"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>(population)</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="do">## 3 ── Merge &amp; derive severity --------------------------------------------</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>merged_df <span class="ot">&lt;-</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>  population_df <span class="sc">|&gt;</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(measles_df, <span class="at">by =</span> <span class="st">"state"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">confirmed_cases =</span> <span class="fu">replace_na</span>(confirmed_cases, <span class="dv">0</span>),</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">severity        =</span> <span class="fu">round</span>((confirmed_cases <span class="sc">/</span> population) <span class="sc">*</span> <span class="fl">1e5</span>, <span class="dv">2</span>),</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">severity_bucket =</span> <span class="fu">case_when</span>(</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>      severity <span class="sc">==</span> <span class="dv">0</span> <span class="sc">~</span> <span class="cn">NA_character_</span>,</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>      severity <span class="sc">&lt;=</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">"1"</span>,</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>      severity <span class="sc">&lt;=</span> <span class="dv">2</span> <span class="sc">~</span> <span class="st">"2"</span>,</span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>      severity <span class="sc">&lt;=</span> <span class="dv">3</span> <span class="sc">~</span> <span class="st">"3"</span>,</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>      severity <span class="sc">&lt;=</span> <span class="dv">4</span> <span class="sc">~</span> <span class="st">"4"</span>,</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>          <span class="sc">~</span> <span class="st">"5"</span></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(usmap)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)       <span class="co"># for st_coordinates()</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(scales)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">── Step 0: merged_df ──</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>         State Confirmed.Cases Probable.Cases
-1        Texas             782             NA
-2   New Mexico              81             NA
-3       Kansas              78             NA
-4         Ohio              35             NA
-5 North Dakota              34             NA
-6      Montana              22             NA</code></pre>
+<pre><code>
+── Step 0: merged_df ──</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Drop the last column</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> data[, <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]  <span class="co"># Keeps only "State" and "Confirmed Cases"</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Check for missing values</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(<span class="fu">is.na</span>(data))  <span class="co"># Total number of NA values</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">glimpse</span>(merged_df))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 0</code></pre>
+<pre><code>Rows: 51
+Columns: 5
+$ state           &lt;chr&gt; "Alabama", "Alaska", "Arizona", "Arkansas", "Californi…
+$ population      &lt;dbl&gt; 5157699, 740133, 7582384, 3088354, 39431263, 5957493, …
+$ confirmed_cases &lt;dbl&gt; 0, 3, 4, 8, 15, 15, 0, 0, 1, 3, 5, 2, 0, 10, 8, 3, 78,…
+$ severity        &lt;dbl&gt; 0.00, 0.41, 0.05, 0.26, 0.04, 0.25, 0.00, 0.00, 0.14, …
+$ severity_bucket &lt;chr&gt; NA, "1", "1", "1", "1", "1", NA, NA, "1", "1", "1", "1…
+# A tibble: 51 × 5
+   state                population confirmed_cases severity severity_bucket
+   &lt;chr&gt;                     &lt;dbl&gt;           &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;          
+ 1 Alabama                 5157699               0     0    &lt;NA&gt;           
+ 2 Alaska                   740133               3     0.41 1              
+ 3 Arizona                 7582384               4     0.05 1              
+ 4 Arkansas                3088354               8     0.26 1              
+ 5 California             39431263              15     0.04 1              
+ 6 Colorado                5957493              15     0.25 1              
+ 7 Connecticut             3675069               0     0    &lt;NA&gt;           
+ 8 Delaware                1051917               0     0    &lt;NA&gt;           
+ 9 District of Columbia     702250               1     0.14 1              
+10 Florida                23372215               3     0.01 1              
+# ℹ 41 more rows</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="do">## 1 ── US polygons (sf) ----------------------------------------------------</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>map_sf <span class="ot">&lt;-</span> <span class="fu">us_map</span>(<span class="at">regions =</span> <span class="st">"states"</span>)               <span class="co"># sf with a geometry column</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">── Step 1: map_sf ──</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>         State Confirmed.Cases
-1        Texas             782
-2   New Mexico              81
-3       Kansas              78
-4         Ohio              35
-5 North Dakota              34
-6      Montana              22</code></pre>
+<pre><code>
+── Step 1: map_sf ──</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">glimpse</span>(map_sf))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 51
+Columns: 4
+$ fips &lt;chr&gt; "02", "01", "05", "04", "06", "08", "09", "11", "10", "12", "13",…
+$ abbr &lt;chr&gt; "AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA",…
+$ full &lt;chr&gt; "Alaska", "Alabama", "Arkansas", "Arizona", "California", "Colora…
+$ geom &lt;MULTIPOLYGON [m]&gt; MULTIPOLYGON (((-2390688 -2..., MULTIPOLYGON (((1091…
+Simple feature collection with 51 features and 3 fields
+Geometry type: MULTIPOLYGON
+Dimension:     XY
+Bounding box:  xmin: -2584074 ymin: -2602555 xmax: 2516258 ymax: 731628.1
+Projected CRS: NAD27 / US National Atlas Equal Area
+First 10 features:
+   fips abbr                 full                           geom
+1    02   AK               Alaska MULTIPOLYGON (((-2390688 -2...
+2    01   AL              Alabama MULTIPOLYGON (((1091785 -13...
+3    05   AR             Arkansas MULTIPOLYGON (((482022.2 -9...
+4    04   AZ              Arizona MULTIPOLYGON (((-1386064 -1...
+5    06   CA           California MULTIPOLYGON (((-1716581 -1...
+6    08   CO             Colorado MULTIPOLYGON (((-787705.6 -...
+7    09   CT          Connecticut MULTIPOLYGON (((2156162 -83...
+8    11   DC District of Columbia MULTIPOLYGON (((1950799 -40...
+9    10   DE             Delaware MULTIPOLYGON (((2037480 -28...
+10   12   FL              Florida MULTIPOLYGON (((1853163 -20...</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="do">## 2 ── Join polygons with severity (key in lower-case) ---------------------</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>map_merged <span class="ot">&lt;-</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  map_sf <span class="sc">|&gt;</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">state_lower =</span> <span class="fu">tolower</span>(full)) <span class="sc">|&gt;</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    merged_df <span class="sc">|&gt;</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(<span class="at">state_lower =</span> <span class="fu">tolower</span>(state)) <span class="sc">|&gt;</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(state_lower, severity_bucket, severity),   <span class="co"># keep extra severity</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">"state_lower"</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">── Step 2: map_merged ──</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+── Step 2: map_merged ──</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">glimpse</span>(map_merged))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 51
+Columns: 7
+$ fips            &lt;chr&gt; "02", "01", "05", "04", "06", "08", "09", "11", "10", …
+$ abbr            &lt;chr&gt; "AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", …
+$ full            &lt;chr&gt; "Alaska", "Alabama", "Arkansas", "Arizona", "Californi…
+$ state_lower     &lt;chr&gt; "alaska", "alabama", "arkansas", "arizona", "californi…
+$ severity_bucket &lt;chr&gt; "1", NA, "1", "1", "1", "1", NA, "1", NA, "1", "1", "1…
+$ severity        &lt;dbl&gt; 0.41, 0.00, 0.26, 0.05, 0.04, 0.25, 0.00, 0.14, 0.00, …
+$ geom            &lt;MULTIPOLYGON [m]&gt; MULTIPOLYGON (((-2390688 -2..., MULTIPOLY…
+Simple feature collection with 51 features and 6 fields
+Geometry type: MULTIPOLYGON
+Dimension:     XY
+Bounding box:  xmin: -2584074 ymin: -2602555 xmax: 2516258 ymax: 731628.1
+Projected CRS: NAD27 / US National Atlas Equal Area
+First 10 features:
+   fips abbr                 full          state_lower severity_bucket severity
+1    02   AK               Alaska               alaska               1     0.41
+2    01   AL              Alabama              alabama            &lt;NA&gt;     0.00
+3    05   AR             Arkansas             arkansas               1     0.26
+4    04   AZ              Arizona              arizona               1     0.05
+5    06   CA           California           california               1     0.04
+6    08   CO             Colorado             colorado               1     0.25
+7    09   CT          Connecticut          connecticut            &lt;NA&gt;     0.00
+8    11   DC District of Columbia district of columbia               1     0.14
+9    10   DE             Delaware             delaware            &lt;NA&gt;     0.00
+10   12   FL              Florida              florida               1     0.01
+                             geom
+1  MULTIPOLYGON (((-2390688 -2...
+2  MULTIPOLYGON (((1091785 -13...
+3  MULTIPOLYGON (((482022.2 -9...
+4  MULTIPOLYGON (((-1386064 -1...
+5  MULTIPOLYGON (((-1716581 -1...
+6  MULTIPOLYGON (((-787705.6 -...
+7  MULTIPOLYGON (((2156162 -83...
+8  MULTIPOLYGON (((1950799 -40...
+9  MULTIPOLYGON (((2037480 -28...
+10 MULTIPOLYGON (((1853163 -20...</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="do">## 3 ── Centroids for labels (≥ 2 per 100 K) -------------------------------</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>centers_sf <span class="ot">&lt;-</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">lon   =</span> state.center<span class="sc">$</span>x,</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">lat   =</span> state.center<span class="sc">$</span>y,</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">state =</span> <span class="fu">tolower</span>(state.name),</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">abbr  =</span> state.abb</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">usmap_transform</span>()                                 <span class="co"># returns POINT geometry</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">── Step 3: centers_sf ──</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+── Step 3: centers_sf ──</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">glimpse</span>(centers_sf))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 50
+Columns: 3
+$ state    &lt;chr&gt; "alabama", "alaska", "arizona", "arkansas", "california", "co…
+$ abbr     &lt;chr&gt; "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "…
+$ geometry &lt;POINT [m]&gt; POINT (1242477 -1280764), POINT (-1930310 809489.6), PO…
+Simple feature collection with 50 features and 2 fields
+Geometry type: POINT
+Dimension:     XY
+Bounding box:  xmin: -2451064 ymin: -1707107 xmax: 2340752 ymax: 809489.6
+Projected CRS: NAD27 / US National Atlas Equal Area
+First 10 features:
+         state abbr                    geometry
+1      alabama   AL    POINT (1242477 -1280764)
+2       alaska   AK   POINT (-1930310 809489.6)
+3      arizona   AZ   POINT (-1069447 -1123669)
+4     arkansas   AR   POINT (705363.2 -1107996)
+5   california   CA  POINT (-1751230 -732714.1)
+6     colorado   CO POINT (-478813.2 -686800.5)
+7  connecticut   CT    POINT (2245756 6007.972)
+8     delaware   DE   POINT (2134287 -377170.9)
+9      florida   FL    POINT (1804349 -1707107)
+10     georgia   GA    POINT (1559639 -1253497)</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>label_df <span class="ot">&lt;-</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  centers_sf <span class="sc">|&gt;</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    merged_df <span class="sc">|&gt;</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(<span class="at">state_lower =</span> <span class="fu">tolower</span>(state)) <span class="sc">|&gt;</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">filter</span>(severity <span class="sc">&gt;=</span> <span class="dv">2</span>) <span class="sc">|&gt;</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(state_lower),</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"state"</span> <span class="ot">=</span> <span class="st">"state_lower"</span>)</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">coords =</span> <span class="fu">st_coordinates</span>(geometry),</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> coords[, <span class="dv">1</span>],</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> coords[, <span class="dv">2</span>]</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">── Step 4: label_df ──</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+── Step 4: label_df ──</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">glimpse</span>(label_df))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 4
+Columns: 6
+$ state    &lt;chr&gt; "kansas", "new mexico", "north dakota", "texas"
+$ abbr     &lt;chr&gt; "KS", "NM", "ND", "TX"
+$ geometry &lt;POINT [m]&gt; POINT (164449.4 -729360.9), POINT (-546376.5 -1149408), POINT…
+$ coords   &lt;dbl[,2]&gt; &lt;matrix[4 x 2]&gt;
+$ x        &lt;dbl&gt; 164449.437, -546376.515, -7437.975, 116108.125
+$ y        &lt;dbl&gt; -729360.9, -1149408.1, 250370.5, -1509040.9
+Simple feature collection with 4 features and 5 fields
+Geometry type: POINT
+Dimension:     XY
+Bounding box:  xmin: -546376.5 ymin: -1509041 xmax: 164449.4 ymax: 250370.5
+Projected CRS: NAD27 / US National Atlas Equal Area
+         state abbr                   geometry     coords.X     coords.Y
+1       kansas   KS POINT (164449.4 -729360.9)   164449.437  -729360.854
+2   new mexico   NM POINT (-546376.5 -1149408)  -546376.515 -1149408.070
+3 north dakota   ND POINT (-7437.975 250370.5)    -7437.975   250370.496
+4        texas   TX  POINT (116108.1 -1509041)   116108.125 -1509040.882
+            x          y
+1  164449.437  -729360.9
+2 -546376.515 -1149408.1
+3   -7437.975   250370.5
+4  116108.125 -1509040.9</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="do">## 4 ── Five-colour palette -------------------------------------------------</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>pal <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"1"</span> <span class="ot">=</span> <span class="st">"#fef0d9"</span>,</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>         <span class="st">"2"</span> <span class="ot">=</span> <span class="st">"#fdcc8a"</span>,</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>         <span class="st">"3"</span> <span class="ot">=</span> <span class="st">"#fc8d59"</span>,</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>         <span class="st">"4"</span> <span class="ot">=</span> <span class="st">"#e34a33"</span>,</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>         <span class="st">"5"</span> <span class="ot">=</span> <span class="st">"#b30000"</span>)</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a><span class="do">## 5 ── Plot with black borders &amp; boxed legend --------------------------------</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(map_merged) <span class="sc">+</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_sf</span>(<span class="fu">aes</span>(<span class="at">fill =</span> severity_bucket),          <span class="co"># polygons</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>          <span class="at">colour =</span> <span class="st">"black"</span>, <span class="at">size =</span> <span class="fl">0.4</span>) <span class="sc">+</span>       <span class="co"># ← black state borders</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">values   =</span> pal,</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">na.value =</span> <span class="st">"white"</span>,</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">drop     =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">name     =</span> <span class="st">"Measles cases</span><span class="sc">\n</span><span class="st">(per 100 K)"</span></span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(                                    <span class="co"># state abbreviations</span></span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">data        =</span> label_df,</span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">x =</span> x, <span class="at">y =</span> y, <span class="at">label =</span> abbr),</span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">inherit.aes =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">fontface    =</span> <span class="st">"bold"</span>,</span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">size        =</span> <span class="dv">3</span></span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_sf</span>() <span class="sc">+</span></span>
+<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_void</span>() <span class="sc">+</span></span>
+<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position   =</span> <span class="st">"right"</span>,</span>
+<span id="cb25-29"><a href="#cb25-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.background =</span> <span class="fu">element_rect</span>(           <span class="co"># ← legend box border</span></span>
+<span id="cb25-30"><a href="#cb25-30" aria-hidden="true" tabindex="-1"></a>      <span class="at">colour =</span> <span class="st">"black"</span>, <span class="at">fill =</span> <span class="st">"white"</span>, <span class="at">linewidth =</span> <span class="fl">0.4</span></span>
+<span id="cb25-31"><a href="#cb25-31" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb25-32"><a href="#cb25-32" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb25-33"><a href="#cb25-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Measles Severity by State (per 100 K) – 21 June 2025"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="moccasin_files/figure-html/data-visualisation-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
 </div>
 </div>
-<section id="convert-state-names-for-merging" class="level1">
-<h1>Convert state names for merging</h1>
-<p>data<span class="math inline">\(State &lt;- tolower(data\)</span>State)</p>
-</section>
-<section id="define-case-bins-and-numeric-labels" class="level1">
-<h1>Define case bins and numeric labels</h1>
-<p>breaks &lt;- c(-1, 10, 50, 100, 500, Inf) labels &lt;- c(“1–10”, “11–50”, “51–100”, “101–500”, “&gt;500”) data<span class="math inline">\(Severity &lt;- cut(data\)</span>Confirmed.Cases, breaks = breaks, labels = labels)</p>
-</section>
-<section id="get-us-map-data-includes-alaska-and-hawaii-repositioned" class="level1">
-<h1>Get US map data (includes Alaska and Hawaii repositioned)</h1>
-<p>map_data &lt;- us_map(regions = “states”) map_data<span class="math inline">\(State &lt;- tolower(map_data\)</span>full)</p>
-</section>
-<section id="merge-with-severity-data" class="level1">
-<h1>Merge with severity data</h1>
-<p>choropleth_data &lt;- left_join(map_data, data, by = “State”)</p>
-</section>
-<section id="get-clean-label-coordinates-from-state-centroids" class="level1">
-<h1>Get clean label coordinates from state centroids</h1>
-<p>label_data &lt;- usmap::centroid_map(“states”) %&gt;% mutate(State = tolower(full), abbr = abbr) %&gt;% left_join(data, by = “State”) %&gt;% filter(Severity %in% c(“51–100”, “101–500”, “&gt;500”))</p>
-</section>
-<section id="define-color-palette" class="level1">
-<h1>Define color palette</h1>
-<p>fill_colors &lt;- c(“1–10” = “#fef0d9”, “11–50” = “#fdcc8a”, “51–100” = “#fc8d59”, “101–500” = “#e34a33”, “&gt;500” = “#b30000”)</p>
-</section>
-<section id="plot-the-choropleth-map" class="level1">
-<h1>Plot the choropleth map</h1>
-<p>ggplot(choropleth_data, aes(x = x, y = y, group = group, fill = Severity)) + geom_polygon(color = “white”, linewidth = 0.2) + geom_text(data = label_data, aes(x = x, y = y, label = abbr), color = “black”, size = 3, fontface = “bold”, inherit.aes = FALSE) + scale_fill_manual(values = fill_colors, na.value = “grey90”) + labs(title = “2025 Measles Severity by State”, fill = “Confirmed Cases”, caption = “Note: Only states with 51+ confirmed cases are labeled for clarity.”) + theme_void() + theme(legend.background = element_rect(color = “black”, fill = NA, size = 0.5), plot.caption = element_text(hjust = 0.5, size = 8, face = “italic”))</p>
-</section>
+</div>
 
 </main>
 <!-- /main column -->
