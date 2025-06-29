@@ -19,7 +19,7 @@ library(stringr)
 #| label: data-preprocessing
 #| message: false
 #| warning: false
-library(tidyverse)   # dplyr, readr, stringr, …
+library(tidyverse) # dplyr, readr, stringr, …
 library(readxl)
 library(janitor)
 
@@ -33,16 +33,19 @@ measles_df <-
 ## 2 ── Population ----------------------------------------------------------
 pop_raw <-
   read_excel("SCPRC-EST2024-18+POP.xlsx",
-             skip      = 4,
-             col_names = FALSE)
+    skip      = 4,
+    col_names = FALSE
+  )
 
 population_df <-
   tibble(
     state      = str_trim(str_remove(pop_raw[[1]], "^\\.+")),
     population = as.numeric(pop_raw[[2]])
   ) |>
-  filter(!state %in% c("United States", "Northeast", "Midwest",
-                       "South", "West", "Puerto Rico")) |>
+  filter(!state %in% c(
+    "United States", "Northeast", "Midwest",
+    "South", "West", "Puerto Rico"
+  )) |>
   drop_na(population)
 
 ## 3 ── Merge & derive severity --------------------------------------------
@@ -51,16 +54,16 @@ merged_df <-
   left_join(measles_df, by = "state") |>
   mutate(
     confirmed_cases = replace_na(confirmed_cases, 0),
-    severity        = round((confirmed_cases / population) * 1e5, 2),
+    severity = round((confirmed_cases / population) * 1e5, 2),
 
     # ---- bucket: 0, <2, 2-<3, 3-<4, 4-<5, ≥5 ----------------------------
     severity_bucket = case_when(
-      severity == 0        ~ "0",
-      severity <  2        ~ "1",
-      severity <  3        ~ "2",
-      severity <  4        ~ "3",
-      severity <  5        ~ "4",
-      TRUE                 ~ "5"
+      severity == 0 ~ "0",
+      severity < 2 ~ "1",
+      severity < 3 ~ "2",
+      severity < 4 ~ "3",
+      severity < 5 ~ "4",
+      TRUE ~ "5"
     )
   )
 ```
@@ -72,11 +75,11 @@ merged_df <-
 library(usmap)
 library(ggplot2)
 library(dplyr)
-library(sf)       # for st_coordinates()
+library(sf) # for st_coordinates()
 library(scales)
 
 ## 1 ── US polygons (sf) ----------------------------------------------------
-map_sf <- us_map(regions = "states")               # sf with geometry column
+map_sf <- us_map(regions = "states") # sf with geometry column
 
 ## 2 ── Join polygons with severity ----------------------------------------
 map_merged <-
@@ -97,7 +100,7 @@ centers_sf <-
     state = tolower(state.name),
     abbr  = state.abb
   ) |>
-  usmap_transform()                                 # POINT geometry
+  usmap_transform() # POINT geometry
 
 label_df <-
   centers_sf |>
@@ -115,48 +118,61 @@ label_df <-
   )
 
 ## 4 ── Colour palette incl. “0” bucket ------------------------------------
-pal <- c("0" = "#ffffff",   # white for 0-case states (now shows in legend)
-         "1" = "#fef0d9",
-         "2" = "#fdcc8a",
-         "3" = "#fc8d59",
-         "4" = "#d7301f",
-         "5" = "#b30000")
+pal <- c(
+  "0" = "#ffffff", # white for 0-case states (now shows in legend)
+  "1" = "#fef0d9",
+  "2" = "#fdcc8a",
+  "3" = "#fc8d59",
+  "4" = "#d7301f",
+  "5" = "#b30000"
+)
 
 ## 5 ── Plot ---------------------------------------------------------------
 ggplot(map_merged) +
   geom_sf(aes(fill = severity_bucket),
-          colour = "black", size = 0.4) +                    # black borders
+    colour = "black", size = 0.4
+  ) + # black borders
   scale_fill_manual(
-    values   = pal,
+    values = pal,
     na.value = "grey90",
-    drop     = FALSE,
-    name     = "Measles cases\n(per 100 K)",
-    breaks   = c("0","1","2","3","4","5"),
-    labels   = c("0",
-                 "< 2",
-                 "2 - <3",
-                 "3 – <4",
-                 "4 – <5",
-                 "≥ 5")
+    drop = FALSE,
+    name = "Measles cases\n(per 100 K)",
+    breaks = c("0", "1", "2", "3", "4", "5"),
+    labels = c(
+      "0",
+      "< 2",
+      "2 - <3",
+      "3 – <4",
+      "4 – <5",
+      "≥ 5"
+    )
   ) +
   geom_text(
-    data        = label_df,
+    data = label_df,
     aes(x = x, y = y, label = abbr),
     inherit.aes = FALSE,
-    fontface    = "bold",
-    size        = 3
+    fontface = "bold",
+    size = 3
   ) +
   coord_sf() +
   theme_void() +
   theme(
-    legend.position   = "right",
-    legend.background = element_rect(colour = "black",
-                                     fill   = "white",
-                                     linewidth = 0.4),
-    legend.margin     = margin(5, 5, 5, 5)
+    legend.position = "right",
+    legend.background = element_rect(
+      colour = "black",
+      fill = "white",
+      linewidth = 0.4
+    ),
+    legend.margin = margin(5, 5, 5, 5),
+    plot.caption.position = "plot",
+    plot.caption = element_text(hjust = 0),
   ) +
   labs(
-    title   = "Measles Severity by State (per 100 K) up to 21 June 2025",
-    caption = "Note: Only states with severity ≥ 2 cases per 100K are labelled for emphasis."
+    title = "Measles Severity by State (per 100 K) – Jan to 21 June 2025",
+    caption = paste0(
+      "Note: Only states with severity ≥ 2 cases per 100K\n",
+      "are labelled for emphasis.\n",
+      "Source: US Centers for Disease Control and Prevention (CDC)."
+    )
   )
 ```
